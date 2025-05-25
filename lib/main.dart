@@ -1,5 +1,8 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_project/add_todo_page.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +34,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  @override
+  void initState() {
+    fetchApi();
+    super.initState();
+  }
+
+  Future<void> fetchApi() async {
+    var url = Uri.https('pokeapi.co', '/api/v2/pokemon');
+    var response = await http.get(url);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+  }
 
   void _onFabClicked() {
     Navigator.of(context).push(
