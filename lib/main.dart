@@ -90,11 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: todos.length,
               itemBuilder: (context, index) {
                 var todoItem = todos[index];
-                return MyItem(
-                  todoItem.title,
-                  todoItem.description,
-                  todoItem.done
-                );
+                return MyItem(todoItem);
               });
           } else {
             return Center(child: CircularProgressIndicator());
@@ -112,43 +108,53 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class MyItem extends StatefulWidget {
 
-  String title;
-  String description;
-  bool isChecked;
+  TodoItem _item;
 
-  MyItem(this.title, this.description, this.isChecked);
+  MyItem(this._item);
 
   @override
-  State<StatefulWidget> createState() => MyItemState(title, description, isChecked);
+  State<StatefulWidget> createState() => _MyItemState(_item);
 }
 
-class MyItemState extends State<MyItem> {
-  String _title;
-  String _description;
-  bool _isChecked = false;
+class _MyItemState extends State<MyItem> {
 
-  MyItemState(this._title, this._description, this._isChecked);
+  TodoItem _item;
 
-  void _checked() {
+  _MyItemState(this._item);
+
+  TodoProvider todoProvider = TodoProvider.instance;
+
+  void _checked(TodoItem item) async {
+    var newItem = TodoItem(item.id, item.title, item.description, !item.done);
+    await todoProvider.updateTodo(newItem);
     setState(() {
-      _isChecked = !_isChecked;
+      _item = newItem;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(_title),
-      subtitle: Text(_description),
-      leading: Checkbox(
-        value: _isChecked,
-        onChanged: (value) {
-          _checked();
+    return Dismissible(
+      key: UniqueKey(),
+      direction: DismissDirection.endToStart,
+      background: Container(),
+      secondaryBackground: Container(color: Colors.red),
+      onDismissed: (direction) {
+        todoProvider.deleteTodo(_item);
+      },
+      child: ListTile(
+        title: Text(_item.title),
+        subtitle: Text(_item.description),
+        leading: Checkbox(
+          value: _item.done,
+          onChanged: (value) {
+            _checked(_item);
+          },
+        ),
+        onTap: () {
+          _checked(_item);
         },
       ),
-      onTap: () {
-        _checked();
-      },
     );
   }
 }
