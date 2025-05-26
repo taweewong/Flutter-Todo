@@ -63,10 +63,6 @@ class _MyHomePageState extends State<MyHomePage> {
     ).push(MaterialPageRoute(builder: (context) => PokemonPage()));
   }
 
-  Future<List<TodoItem>> _fetchTodos() async {
-    return await todoProvider.fetchTodos();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,9 +122,6 @@ class _MyItemState extends State<MyItem> {
     var newItem = TodoItem(item.id, item.title, item.description, !item.done);
     context.read<TodoBloc>().add(UpdateTodoBlocEvent(newItem));
     context.read<TodoBloc>().add(FetchTodoBlocEvent());
-    // setState(() {
-    //   widget._item = newItem;
-    // });
   }
 
   @override
