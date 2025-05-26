@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_project/db/todo_item.dart';
+import 'package:uuid/uuid.dart';
+
+import 'db/todo_provider.dart';
 
 class AddTodoPage extends StatefulWidget {
   const AddTodoPage({super.key});
@@ -8,6 +12,12 @@ class AddTodoPage extends StatefulWidget {
 }
 
 class _AddTodoPageState extends State<AddTodoPage> {
+
+  TodoProvider todoProvider = TodoProvider.instance;
+
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,19 +34,31 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 decoration: InputDecoration(
                   labelText: "Title"
                 ),
+                controller: _titleController,
+              ),
+              SizedBox.fromSize(
+                size: Size(16, 16),
               ),
               TextField(
-                  decoration: InputDecoration(
-                      labelText: "Description"
-                  )
+                decoration: InputDecoration(
+                    labelText: "Description"
+                ),
+                controller: _descController,
               ),
               SizedBox.fromSize(
                 size: Size(16, 16),
               ),
               ElevatedButton(
-                  onPressed: () {
-                    //TODO: Add todo item
-                    Navigator.of(context).pop();
+                  onPressed: () async {
+                    var todoItem = TodoItem(
+                      Uuid().v4(),
+                      _titleController.text,
+                      _descController.text,
+                      false
+                    );
+                    await todoProvider.insertTodo(todoItem);
+                    if (!mounted) return;
+                    closePage();
                   },
                   child: Text("Add")
               )
@@ -45,5 +67,9 @@ class _AddTodoPageState extends State<AddTodoPage> {
         ),
       ),
     );
+  }
+
+  void closePage() {
+    Navigator.of(context).pop();
   }
 }

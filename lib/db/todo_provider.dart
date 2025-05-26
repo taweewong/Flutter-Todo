@@ -5,6 +5,8 @@ import 'package:sqflite/sqflite.dart';
 class TodoProvider {
   static const tableName = "TodoItemTable";
 
+  static TodoProvider instance = TodoProvider();
+
   Future<Database> database() async {
     return await openDatabase(
       join(await getDatabasesPath(), 'todo_item.db'),
@@ -19,9 +21,7 @@ class TodoProvider {
 
   Future<List<TodoItem>> fetchTodos() async {
     Database db = await database();
-    List<Map<dynamic, dynamic>> todosRaw = await db.query(
-      "SELECT * FROM $tableName",
-    );
+    List<Map<dynamic, dynamic>> todosRaw = await db.query(tableName);
 
     return todosRaw.map((e) => TodoItem.fromMap(e)).toList();
   }

@@ -3,10 +3,12 @@ import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_project/add_todo_page.dart';
+import 'package:flutter_project/db/todo_provider.dart';
 import 'package:flutter_project/pokemon.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
+import 'db/todo_item.dart';
 import 'model/pokemon_model.dart';
 
 void main() {
@@ -40,16 +42,27 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  TodoProvider todoProvider = TodoProvider.instance;
+
   void _onFabClicked() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (context) => AddTodoPage()));
+    )
+    .push(MaterialPageRoute(builder: (context) => AddTodoPage()))
+    .then((value) {
+      setState(() {});
+    });
   }
 
   void _onPokemonActionClicked() {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => PokemonPage()));
+  }
+
+  Future<List<TodoItem>> _fetchTodos() async {
+    return await todoProvider.fetchTodos();
   }
 
   @override
@@ -66,11 +79,27 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: 20,
-        itemBuilder: (context, index) {
-          return MyItem();
-        },
+      body: FutureBuilder<List<TodoItem>>(
+        future: _fetchTodos(),
+        initialData: [],
+        builder: (BuildContext context, AsyncSnapshot<List<TodoItem>> snapshot) {
+          print("======> ${snapshot.data?.length}");
+          if (snapshot.hasData) {
+            List<TodoItem> todos = snapshot.data ?? [];
+            return ListView.builder(
+              itemCount: todos.length,
+              itemBuilder: (context, index) {
+                var todoItem = todos[index];
+                return MyItem(
+                  todoItem.title,
+                  todoItem.description,
+                  todoItem.done
+                );
+              });
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabClicked,
@@ -82,14 +111,23 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class MyItem extends StatefulWidget {
-  const MyItem({super.key});
+
+  String title;
+  String description;
+  bool isChecked;
+
+  MyItem(this.title, this.description, this.isChecked);
 
   @override
-  State<StatefulWidget> createState() => MyItemState();
+  State<StatefulWidget> createState() => MyItemState(title, description, isChecked);
 }
 
 class MyItemState extends State<MyItem> {
+  String _title;
+  String _description;
   bool _isChecked = false;
+
+  MyItemState(this._title, this._description, this._isChecked);
 
   void _checked() {
     setState(() {
@@ -100,8 +138,8 @@ class MyItemState extends State<MyItem> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text("title"),
-      subtitle: Text("description"),
+      title: Text(_title),
+      subtitle: Text(_description),
       leading: Checkbox(
         value: _isChecked,
         onChanged: (value) {
