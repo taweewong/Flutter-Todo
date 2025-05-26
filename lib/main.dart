@@ -4,6 +4,7 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter_project/add_todo_page.dart';
 import 'package:flutter_project/pokemon.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 import 'model/pokemon_model.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         appBarTheme: const AppBarTheme(foregroundColor: Color(0xFFFFFFFF)),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+        textTheme: GoogleFonts.kanitTextTheme(),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
