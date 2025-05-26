@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_project/add_todo_page.dart';
+import 'package:flutter_project/pokemon.dart';
 import 'package:http/http.dart' as http;
+
+import 'model/pokemon_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,24 +38,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-  @override
-  void initState() {
-    fetchApi();
-    super.initState();
-  }
-
-  Future<void> fetchApi() async {
-    var url = Uri.https('pokeapi.co', '/api/v2/pokemon');
-    var response = await http.get(url);
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-  }
-
   void _onFabClicked() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => AddTodoPage())
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => AddTodoPage()));
+  }
+
+  void _onPokemonActionClicked() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => PokemonPage()));
   }
 
   @override
@@ -60,6 +56,13 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _onPokemonActionClicked,
+            icon: Icon(Icons.category),
+            tooltip: 'Pokemon',
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: 20,
@@ -97,9 +100,12 @@ class MyItemState extends State<MyItem> {
     return ListTile(
       title: Text("title"),
       subtitle: Text("description"),
-      leading: Checkbox(value: _isChecked, onChanged: (value) {
-        _checked();
-      }),
+      leading: Checkbox(
+        value: _isChecked,
+        onChanged: (value) {
+          _checked();
+        },
+      ),
       onTap: () {
         _checked();
       },
@@ -120,16 +126,15 @@ class MyItemOldState extends State<MyItem> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Checkbox(value: _isChecked, onChanged: (value) {
-          _checked();
-        }),
+        Checkbox(
+          value: _isChecked,
+          onChanged: (value) {
+            _checked();
+          },
+        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("title"),
-            Text("description"),
-            SizedBox(height: 8),
-          ],
+          children: [Text("title"), Text("description"), SizedBox(height: 8)],
         ),
       ],
     );
