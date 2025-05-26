@@ -1,15 +1,14 @@
-import 'dart:convert';
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_project/add_todo_page.dart';
+import 'package:flutter_project/bloc/todo_bloc.dart';
+import 'package:flutter_project/bloc/todo_bloc_event.dart';
 import 'package:flutter_project/db/todo_provider.dart';
 import 'package:flutter_project/pokemon.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 
+import 'bloc/todo_bloc_state.dart';
 import 'db/todo_item.dart';
-import 'model/pokemon_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,14 +19,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        appBarTheme: const AppBarTheme(foregroundColor: Color(0xFFFFFFFF)),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-        textTheme: GoogleFonts.kanitTextTheme(),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    return MultiBlocProvider(
+        providers: [BlocProvider(create: (context) => TodoBloc())],
+        child: MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            appBarTheme: const AppBarTheme(foregroundColor: Color(0xFFFFFFFF)),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+            textTheme: GoogleFonts.kanitTextTheme(),
+          ),
+          home: const MyHomePage(title: 'Flutter Demo Home Page'),
+        )
     );
   }
 }
@@ -79,23 +81,25 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<TodoItem>>(
-        future: _fetchTodos(),
-        initialData: [],
-        builder: (BuildContext context, AsyncSnapshot<List<TodoItem>> snapshot) {
-          print("======> ${snapshot.data?.length}");
-          if (snapshot.hasData) {
-            List<TodoItem> todos = snapshot.data ?? [];
-            return ListView.builder(
-              itemCount: todos.length,
-              itemBuilder: (context, index) {
-                var todoItem = todos[index];
-                return MyItem(todoItem);
-              });
-          } else {
+      body: BlocBuilder<TodoBloc, TodoBlocState>(
+          builder: (context, state) {
+            if (state is InitialTodoBlocState) {
+              context.read<TodoBloc>().add(FetchTodoBlocEvent());
+            }
+
+            if (state is TodoListState) {
+              var todos = state.todos;
+              return ListView.builder(
+                  itemCount: todos.length,
+                  itemBuilder: (context, index) {
+                    var todoItem = todos[index];
+                    return MyItem(todoItem);
+                  }
+              );
+            }
+
             return Center(child: CircularProgressIndicator());
           }
-        }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabClicked,
@@ -113,48 +117,49 @@ class MyItem extends StatefulWidget {
   MyItem(this._item);
 
   @override
-  State<StatefulWidget> createState() => _MyItemState(_item);
+  State<StatefulWidget> createState() => _MyItemState();
 }
 
 class _MyItemState extends State<MyItem> {
 
-  TodoItem _item;
-
-  _MyItemState(this._item);
-
-  TodoProvider todoProvider = TodoProvider.instance;
-
   void _checked(TodoItem item) async {
     var newItem = TodoItem(item.id, item.title, item.description, !item.done);
-    await todoProvider.updateTodo(newItem);
-    setState(() {
-      _item = newItem;
-    });
+    context.read<TodoBloc>().add(UpdateTodoBlocEvent(newItem));
+    context.read<TodoBloc>().add(FetchTodoBlocEvent());
+    // setState(() {
+    //   widget._item = newItem;
+    // });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: UniqueKey(),
-      direction: DismissDirection.endToStart,
-      background: Container(),
-      secondaryBackground: Container(color: Colors.red),
-      onDismissed: (direction) {
-        todoProvider.deleteTodo(_item);
-      },
-      child: ListTile(
-        title: Text(_item.title),
-        subtitle: Text(_item.description),
-        leading: Checkbox(
-          value: _item.done,
-          onChanged: (value) {
-            _checked(_item);
-          },
-        ),
-        onTap: () {
-          _checked(_item);
-        },
-      ),
+    return BlocBuilder<TodoBloc, TodoBlocState>(
+        builder: (context, state) {
+          var item = widget._item;
+          return Dismissible(
+            key: UniqueKey(),
+            direction: DismissDirection.endToStart,
+            background: Container(),
+            secondaryBackground: Container(color: Colors.red),
+            onDismissed: (direction) {
+              context.read<TodoBloc>().add(DeleteTodoBlocEvent(item));
+              context.read<TodoBloc>().add(FetchTodoBlocEvent());
+            },
+            child: ListTile(
+              title: Text(item.title),
+              subtitle: Text(item.description),
+              leading: Checkbox(
+                value: item.done,
+                onChanged: (value) {
+                  _checked(item);
+                },
+              ),
+              onTap: () {
+                _checked(item);
+              },
+            ),
+          );
+        }
     );
   }
 }

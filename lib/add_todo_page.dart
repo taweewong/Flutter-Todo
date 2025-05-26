@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_project/db/todo_item.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_project/bloc/todo_bloc_event.dart';
+import 'package:flutter_project/bloc/todo_bloc_state.dart';
 import 'package:uuid/uuid.dart';
 
-import 'db/todo_provider.dart';
+import 'bloc/todo_bloc.dart';
 
 class AddTodoPage extends StatefulWidget {
   const AddTodoPage({super.key});
@@ -12,8 +14,6 @@ class AddTodoPage extends StatefulWidget {
 }
 
 class _AddTodoPageState extends State<AddTodoPage> {
-
-  TodoProvider todoProvider = TodoProvider.instance;
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -48,20 +48,22 @@ class _AddTodoPageState extends State<AddTodoPage> {
               SizedBox.fromSize(
                 size: Size(16, 16),
               ),
-              ElevatedButton(
-                  onPressed: () async {
-                    var todoItem = TodoItem(
-                      Uuid().v4(),
-                      _titleController.text,
-                      _descController.text,
-                      false
-                    );
-                    await todoProvider.insertTodo(todoItem);
-                    if (!mounted) return;
-                    closePage();
-                  },
-                  child: Text("Add")
-              )
+              BlocBuilder<TodoBloc, TodoBlocState>(builder: (context, state) {
+                return ElevatedButton(
+                    onPressed: () async {
+                      context.read<TodoBloc>().add(
+                          AddTodoBlocEvent(
+                            Uuid().v4(),
+                            _titleController.text,
+                            _descController.text,
+                          ));
+                      context.read<TodoBloc>().add(FetchTodoBlocEvent());
+                      if (!mounted) return;
+                      closePage();
+                    },
+                    child: Text("Add")
+                );
+              })
             ],
           ),
         ),
